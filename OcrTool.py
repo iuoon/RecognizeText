@@ -1,13 +1,10 @@
 import wx
-import pytesseract
 import os
 import cv2
-from PIL import Image
 import numpy as np
 import threading
 import tools.infer.utility as utility
 import tools.infer.predict_system as ocr_sys
-import argparse
 import time
 from collections import Counter
 
