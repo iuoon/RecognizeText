@@ -7,8 +7,9 @@ import tools.infer.utility as utility
 import tools.infer.predict_system as ocr_sys
 import time
 from collections import Counter
+import skimage.feature._orb_descriptor_positions
 
-APP_TITLE = u'识别群名并改名'
+APP_TITLE = u'识别并改名'
 APP_ICON = 'res/python.ico'
 
 
@@ -65,13 +66,16 @@ class MainFrame(wx.Frame):
         args.det_model_dir="./config/ch_det_mv3_db/"
         args.rec_model_dir="./config/ch_rec_mv3_crnn/"
         args.use_gpu=False
+        print("初始化系统")
         image_file_list = ocr_sys.get_image_file_list(args.image_dir)
         text_sys = ocr_sys.TextSystem(args)
+        print("完成初始化")
         #for image_file in image_file_list:
 
         for n in range(len(image_file_list)):
             try:
                 self.tipCurtLabel.SetLabelText("当前第"+str(n+1)+"个")
+                print(self.tipCurtLabel.GetLabelText())
                 image_file = image_file_list[n]
                 if image_file.endswith(('jpg', 'png', 'jpeg', 'JPEG', 'JPG', 'bmp')) == False:
                     continue
@@ -85,6 +89,14 @@ class MainFrame(wx.Frame):
                 sp = img.shape
                 height = sp[0]
                 width = sp[1]
+
+                if width > height:
+                    img = cv2.flip(img, 0)
+                    img = cv2.transpose(img)
+                    sp = img.shape
+                    height = sp[0]
+                    width = sp[1]
+
                 crop_img = img[int(height*2/3):height, int(width*2/3):width]
                 crop_img = cv2.resize(crop_img, ((int(width/3))*2, (int(height/3))*2), cv2.INTER_LINEAR)
                 # 逆时针旋转90度
@@ -98,15 +110,26 @@ class MainFrame(wx.Frame):
                 print("Predict time of %s: %.3fs" % (image_file, elapse))
                 dt_num = len(dt_boxes)
                 textList = []
+                dict ={}
                 for dno in range(dt_num):
                     text, score = rec_res[dno]
                     if score >= 0.5:
                         text_str = "%s, %.3f" % (text, score)
-                        textList.append(text)
-                finalNo = Counter(textList).most_common(1)[0][0]
+                        print(text_str)
+                        if text.isdigit() and len(text) == 8:
+                            textList.append(text)
+                            dict[text] = score
+                finalArr = Counter(textList).most_common(1)[0]
+                finalNo = finalArr[0]
+                finalCount = finalArr[1]
                 print(finalNo)
                 try:
-                   os.rename(image_file, filePath+"/"+finalNo+ext)
+                    if finalCount == 1:
+                        dic1SortList = sorted(dict.items(),key = lambda x:x[1],reverse = True)
+                        finalNo = dic1SortList[0][0]
+                        os.rename(image_file, filePath+"/"+finalNo+ext)
+                    else:
+                        os.rename(image_file, filePath+"/"+finalNo+ext)
                 except Exception as e:
                     print(e)
                     os.rename(image_file, filePath+"/"+finalNo+"(标识码"+str(n)+")"+ext)
