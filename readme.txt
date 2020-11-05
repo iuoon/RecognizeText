@@ -5,4 +5,4 @@
 4、打包exe过程：pip install pywin32 、pip install PyInstaller 、pyinstaller -F reptileMap.py -w
 
 nuitka打包方式
-# python -m nuitka .\OcrTool.py
+# python -m nuitka --windows-disable-console .\OcrTool.py
