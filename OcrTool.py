@@ -12,6 +12,7 @@ import skimage.feature._orb_descriptor_positions
 APP_TITLE = u'识别并改名'
 APP_ICON = 'res/python.ico'
 
+# '票号识别'
 
 class MainFrame(wx.Frame):
 
