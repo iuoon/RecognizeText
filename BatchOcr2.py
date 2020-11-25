@@ -98,8 +98,6 @@ class MainFrame(wx.Frame):
                 if len(txt_list) == 0:
                     img = cv2.resize(img, (0, 0), fx=4, fy=4, interpolation=cv2.INTER_LINEAR)
                     txt_list = pyzbar.decode(img)
-                    cv2.imshow('img', img)
-                    cv2.waitKey()
                 print(txt_list)
                 # dt_boxes, rec_res = text_sys(img)
                 elapse = time.time() - startTime
