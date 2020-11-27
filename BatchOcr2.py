@@ -105,20 +105,32 @@ class MainFrame(wx.Frame):
                     continue
 
                 finalText = str(txt_list[0].data, encoding="utf-8")
-                print(finalText)
+                # print(finalText)
                 if finalText == "":
                     continue
 
                 textArr = finalText.split(',')
                 if len(textArr) < 7:
                     continue
-                finalText = textArr[5] + '-' + textArr[3] + '-' + textArr[6].split(".")[0]
+                finalText = '-' + textArr[3] + '-' + textArr[6].split(".")[0]
 
                 # 对受理方式进行ocr识别 先裁切图片
                 img2 = self.cropImg2(img)
-                cv2.imshow('img', img2)
-                cv2.waitKey()
+                # cv2.imshow('img2', img2)
+                # cv2.waitKey()
                 dt_boxes, rec_res = text_sys(img2)
+                dt_num = len(dt_boxes)
+                for dno in range(dt_num):
+                    text, score = rec_res[dno]
+                    if score >= 0.5:
+                        text_str = "%s, %.3f" % (text, score)
+                        # print(text_str)
+                        if text.find("理号：") != -1:
+                            index = text.find("理号：")
+                            shouliNum = text[int(index + 3):]
+                            print(shouliNum)
+                            finalText = shouliNum + finalText
+
                 elapse = time.time() - startTime
                 print("Predict time of %s: %.3fs" % (image_file, elapse))
 
@@ -130,7 +142,6 @@ class MainFrame(wx.Frame):
                     textNoDict[finalText] = (num + 1)
                 print("finalText:", finalText, "append num:" + str(num))
 
-                num = 0
                 try:
                     if num == 0:
                         finalFileName = filePath + "\\" + finalText + ext
@@ -138,17 +149,22 @@ class MainFrame(wx.Frame):
                             continue
                         file1 = Path(finalFileName)
                         if file1.exists():
-                            newName = filePath + "\\" + finalText + "(" + str(textNoDict[finalText]) + ")" + ext
-                            if image_file == newName:
-                                continue
-                            os.rename(image_file, newName)
+                            newName = filePath + "\\" + finalText + self.getRandom(4) + ext
+                            imgFileDict[finalFileName] = newName
+                            os.rename(finalFileName, newName)
                         else:
                             os.rename(image_file, filePath + "\\" + finalText + ext)
                     else:
                         finalFileName = filePath + "\\" + finalText + "(" + str(num) + ")" + ext
                         if finalFileName == image_file:
                             continue
-                        os.rename(image_file, filePath + "\\" + finalText + "(" + str(num) + ")" + ext)
+                        file1 = Path(finalFileName)
+                        if file1.exists():
+                            newName = filePath + "\\" + finalText + self.getRandom(4) + ext
+                            imgFileDict[finalFileName] = newName
+                            os.rename(finalFileName, newName)
+                        else:
+                            os.rename(image_file, filePath + "\\" + finalText + "(" + str(num) + ")" + ext)
                 except Exception as e:
                     print(e)
 
@@ -247,13 +263,16 @@ class MainFrame(wx.Frame):
         return cropped
 
     def cropImg2(self, img):
-        sp = img.shape
+        img2 = img.copy()
+        img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2RGB)
+        sp = img2.shape
         height = sp[0]
         width = sp[1]
         ws = int(width * 0.7)
-        hs = int(height * 0.5)
-        cropped_img = img[hs:height, int(0.2*width):ws]
-        return cropped_img
+        hs = int(height * 0.6)
+        cropped_img2 = img2[hs:int(height * 0.9), int(0.3 * width):ws]
+        return cropped_img2
+
 
 class MainApp(wx.App):
     def OnInit(self):
