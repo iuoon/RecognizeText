@@ -133,7 +133,7 @@ class MainFrame(wx.Frame):
                     text, score = rec_res[dno]
                     if score >= 0.5:
                         text_str = "%s, %.3f" % (text, score)
-                        print(text_str)
+                        # print(text_str)
                         if text.find("理号：") != -1:
                             index = text.find("理号：")
                             shouliNum = text[int(index + 3):]
