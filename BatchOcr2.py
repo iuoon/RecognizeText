@@ -71,6 +71,9 @@ class MainFrame(wx.Frame):
         print("初始化系统")
         image_file_list = self.get_image_file_list(self.path.GetLabelText())
         text_sys = ocr_sys.TextSystem(args)
+
+        if not os.path.exists(self.path.GetLabelText()+"/ticket_no"):
+            os.makedirs(self.path.GetLabelText()+"/ticket_no")
         print("完成初始化")
         imgFileDict = {}
         for image_file in image_file_list:
@@ -89,12 +92,13 @@ class MainFrame(wx.Frame):
                 (filePathAndName, ext) = os.path.splitext(image_file)
 
                 img = self.cv_imread(image_file)
+                # cv2.imshow('img', img1)
+                # cv2.waitKey()
                 if img is None:
                     print("error in loading image:{}".format(image_file))
                     continue
                 img1 = self.cropImg(img)
-                # cv2.imshow('img', img)
-                # cv2.waitKey()
+
                 startTime = time.time()
                 txt_list = pyzbar.decode(img1)
                 if len(txt_list) == 0:
@@ -114,8 +118,13 @@ class MainFrame(wx.Frame):
                     continue
                 finalText = '-' + textArr[3] + '-' + textArr[6].split(".")[0]
 
+                file1 = Path(self.path.GetLabelText()+"/ticket_no/"+textArr[3]+".jpg")
+                if not file1.exists():
+                    cv2.imencode('.jpg', img)[1].tofile(self.path.GetLabelText()+"/ticket_no/"+textArr[3]+".jpg")
+
                 # 对受理方式进行ocr识别 先裁切图片
                 img2 = self.cropImg2(img)
+                img2 = cv2.resize(img2, (0, 0), fx=4, fy=4, interpolation=cv2.INTER_LINEAR)
                 # cv2.imshow('img2', img2)
                 # cv2.waitKey()
                 dt_boxes, rec_res = text_sys(img2)
@@ -124,13 +133,15 @@ class MainFrame(wx.Frame):
                     text, score = rec_res[dno]
                     if score >= 0.5:
                         text_str = "%s, %.3f" % (text, score)
-                        # print(text_str)
+                        print(text_str)
                         if text.find("理号：") != -1:
                             index = text.find("理号：")
                             shouliNum = text[int(index + 3):]
-                            print(shouliNum)
                             finalText = shouliNum + finalText
-
+                        if text.find("理号:") != -1:
+                            index = text.find("理号:")
+                            shouliNum = text[int(index + 3):]
+                            finalText = shouliNum + finalText
                 elapse = time.time() - startTime
                 print("Predict time of %s: %.3fs" % (image_file, elapse))
 
