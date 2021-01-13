@@ -230,7 +230,7 @@ class MainFrame(wx.Frame):
         height = sp[0]
         width = sp[1]
         ws = int(width * 0.8)
-        hs = int(height * 0.25)
+        hs = int(height * 0.35)
         cropped_img = img[0:hs, ws:width]
 
         # 裁剪出二维码区域
